@@ -57,6 +57,8 @@ class ConvexHullSolver(QObject):
     def showText(self, text):
         self.view.displayStatusText(text)
 
+    # Function Time Complexity: We will call this recursive function a max of log(n) times because each time the size of n is halved.  Each recursive call will then have a O(n + n + n) due to the function calls and opportations.  This combines to be O(3n) * O(log n) = O(3n log n) = O(n log n)
+    # Function Space Complexity: O(2n) because in the worst case scenario we have n edges and points
     def solve_hull(self, points):
         num_points = len(points)
 
@@ -85,6 +87,8 @@ class ConvexHullSolver(QObject):
 
         return self.combine_hull(left_hull, right_hull)
 
+    # Function Time Complexity: 4n = n
+    # Function Space Complexity: 2n = n
     def combine_hull(self, left_hull, right_hull):
         upper_tan, left_hull_start_index, right_hull_end_index = self.find_upper_tangent(left_hull, right_hull)
         lower_tan, left_hull_ending_index, right_hull_starting_index = self.find_lower_tangent(left_hull, right_hull)
@@ -94,27 +98,27 @@ class ConvexHullSolver(QObject):
         # self.showTangent(self.points_to_lines(upper_tan), YELLOW)
         # self.showTangent(self.points_to_lines(lower_tan), YELLOW)
 
+        combined_hull = []
 
-        combined_hull = []  # First put in upper tan line
+        found_lower_tangent_point = False
 
-        index = left_hull_start_index
-        while left_hull[index] != left_hull[left_hull_ending_index]:  # Go through the left side, starting at where the tan ends until hiting where the bottom tan starts
-            # self.showTangent([QLineF(left_hull[(index - 1) % len(left_hull)], left_hull[index])], RED)
-            combined_hull.append(left_hull[index])
-            index = (index - 1) % len(left_hull)
-        combined_hull.append(left_hull[index]) #Adds the last node (that is the start of bottom tan)
+        j = right_hull_end_index
 
-        index = right_hull_starting_index
-        while right_hull[index] != right_hull[right_hull_end_index]:
-            # self.showTangent([QLineF(right_hull[(index - 1) % len(right_hull)], right_hull[index])], RED)
-            combined_hull.append(right_hull[index])
-            index = (index - 1) % len(right_hull)
-        combined_hull.append(right_hull[index])
+        while found_lower_tangent_point is False:  # bigO(n) bc the furthest distance is the whole hull
+            combined_hull.append(right_hull[j])
+            if right_hull[j] == lower_tan[1]:
+                found_lower_tangent_point = True
+            j = (j + 1) % len(right_hull)
 
-        # self.showTangent(self.points_to_lines(combined_hull), YELLOW)
+        i = left_hull_ending_index
+        while i is not len(left_hull):  # bigO(n) bc the furthest distance is the whole hull
+            combined_hull.append(left_hull[i])
+            i = (i + 1) % len(left_hull)
 
         return combined_hull
 
+    # Function Time Complexity: 3n = n (The loops)
+    # Function Space Complexity: 2n = n (the two halves)
     def find_upper_tangent(self, left_hull, right_hull):
         left_tan, right_tan = False, False
 
@@ -126,10 +130,10 @@ class ConvexHullSolver(QObject):
         # self.showTangent(self.points_to_lines(right_hull), BLUE)
 
         while not left_tan and not right_tan:
-            while not left_tan:
-                self.showTangent([QLineF(left_hull[left_hull_index], right_hull[right_hull_index])], GREEN)
+            while not left_tan:  # Total iteration can be all of the left and right hull, thus 2n
+                # self.showTangent([QLineF(left_hull[left_hull_index], right_hull[right_hull_index])], GREEN)
                 left_hull_index = (left_hull_index - 1) % len(left_hull)
-                self.showTangent([QLineF(left_hull[left_hull_index], right_hull[right_hull_index])], YELLOW)
+                # self.showTangent([QLineF(left_hull[left_hull_index], right_hull[right_hull_index])], YELLOW)
                 new_slope = self.get_slope(left_hull[left_hull_index], right_hull[right_hull_index])
                 if new_slope < current_slope:
                     left_tan, right_tan = False, False
@@ -138,10 +142,10 @@ class ConvexHullSolver(QObject):
                     left_tan = True
                     left_hull_index = (left_hull_index + 1) % len(left_hull)  # Since we can't move up anymore we use the last good index
 
-            while not right_tan:
-                self.showTangent([QLineF(left_hull[left_hull_index], right_hull[right_hull_index])], RED)
+            while not right_tan: # Total iteration can be n
+                # self.showTangent([QLineF(left_hull[left_hull_index], right_hull[right_hull_index])], RED)
                 right_hull_index = (right_hull_index + 1) % len(right_hull)
-                self.showTangent([QLineF(left_hull[left_hull_index], right_hull[right_hull_index])], BLUE)
+                # self.showTangent([QLineF(left_hull[left_hull_index], right_hull[right_hull_index])], BLUE)
                 new_slope = self.get_slope(left_hull[left_hull_index], right_hull[right_hull_index])
                 if new_slope > current_slope:
                     left_tan, right_tan = False, False
@@ -150,9 +154,10 @@ class ConvexHullSolver(QObject):
                     right_tan = True
                     right_hull_index = (right_hull_index - 1) % len(right_hull)  # Since we can't move up anymore we use the last good index
 
-        self.showTangent([QLineF(left_hull[left_hull_index], right_hull[right_hull_index])], BLUE)
+        # self.showTangent([QLineF(left_hull[left_hull_index], right_hull[right_hull_index])], BLUE)
         return [left_hull[left_hull_index], right_hull[right_hull_index]], left_hull_index, right_hull_index
 
+    # Function Time and Space Complexity are the same as the upper tan func (see above)
     def find_lower_tangent(self, left_hull, right_hull):
         left_tan, right_tan = False, False
 
@@ -191,13 +196,18 @@ class ConvexHullSolver(QObject):
         # self.showTangent([QLineF(left_hull[left_hull_index], right_hull[right_hull_index])], BLUE)
         return [left_hull[left_hull_index], right_hull[right_hull_index]], left_hull_index, right_hull_index
 
+    # Function Time Complexity: c
+    # Function Space Complexity: c
     def get_slope(self, point1, point2):
         return (point2.y() - point1.y()) / (point2.x() - point1.x())  # Slope = change in y / change in x
 
+    # Function Time Complexity: n
+    # Function Space Complexity: n
     def get_point_index(self, hull, direction):
         index = 0
         record = hull[0].x()
 
+        # Either direction will have a big o of n because we have to iterate through everything
         if direction is "right":
             for i in range(0, len(hull) - 1):
                 if hull[i].x() > record:
@@ -211,6 +221,8 @@ class ConvexHullSolver(QObject):
 
         return index
 
+    # Function Time Complexity: n
+    # Function Space Complexity: 2n = n
     def points_to_lines(self, points):
         lines = []
         for i in range(0, len(points)):
@@ -237,15 +249,15 @@ class ConvexHullSolver(QObject):
                 return 0  # return 0 when both the left and the right item have the same weight and should be ordered "equally" without precedence
 
         t1 = time.time()
-        sorted_points = sorted(points, key=cmp_to_key(compare))
-        # TODO: SORT THE POINTS BY INCREASING X-VALUE
+        # SORT THE POINTS BY INCREASING X-VALUE
+        sorted_points = sorted(points, key=cmp_to_key(compare))  # Uses timsort algor, which is on average O(n log n)
         t2 = time.time()
 
         t3 = time.time()
         # this is a dummy polygon of the first 3 unsorted points
         # polygon = [QLineF(sortedPoints[i], sortedPoints[(i + 1) % 3]) for i in range(3)]
-        # TODO: REPLACE THE LINE ABOVE WITH A CALL TO YOUR DIVIDE-AND-CONQUER CONVEX HULL SOLVER
-        polygon = self.points_to_lines(self.solve_hull(sorted_points))
+        # REPLACE THE LINE ABOVE WITH A CALL TO YOUR DIVIDE-AND-CONQUER CONVEX HULL SOLVER
+        polygon = self.points_to_lines(self.solve_hull(sorted_points))  # n + n +
         t4 = time.time()
 
         # when passing lines to the display, pass a list of QLineF objects.  Each QLineF

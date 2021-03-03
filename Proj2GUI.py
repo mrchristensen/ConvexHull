@@ -22,7 +22,6 @@ else:
 # Import the code with the actual implementation
 from convex_hull import *
 
-
 # from convex_hull_complete_nonthread import *
 
 
